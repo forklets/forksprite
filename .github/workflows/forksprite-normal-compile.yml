@@ -182,4 +182,3 @@ EOF
           file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
           asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
           tag: ${{ needs.create-release.outputs.release-tag }}
-
