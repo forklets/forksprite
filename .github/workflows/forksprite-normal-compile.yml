@@ -22,9 +22,9 @@ jobs:
         id: aseprite-link
         uses: a1393323447/fetch-release@main
         with:
-            group: aseprite
-            repo: aseprite
-            match: Aseprite-.*?-Source.zip
+          group: aseprite
+          repo: aseprite
+          match: Aseprite-.*?-Source.zip
 
   create-release:
     name: Create Release
@@ -51,9 +51,9 @@ jobs:
       contents: write
     runs-on: ${{ matrix.os }}
     strategy:
-        matrix:
-          os: [ windows-latest, ubuntu-latest, macOS-latest ]
-        fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest, macOS-latest ]
+      fail-fast: false
     steps:
       - name: Install Dependencies
         if: runner.os == 'Linux'
@@ -117,7 +117,9 @@ jobs:
         run: |
           cd build && ninja
 
-      # ➕ ADDED: create .deb packaging structure
+      ###############################################
+      # ➕ ADDED: Create Debian package structure
+      ###############################################
       - name: Create Debian package structure
         if: runner.os == 'Linux'
         shell: bash
@@ -128,17 +130,22 @@ jobs:
 
           cp aseprite debpkg/usr/local/bin/aseprite
 
-          cat <<EOF > debpkg/DEBIAN/control
-          Package: aseprite
-          Version="${{ needs.create-release.outputs.release-tag }}"
-          Version="${VERSION#v}"
-          Architecture: amd64
-          Maintainer: GitHub Actions
-          Priority: optional
-          Description: Aseprite (custom GitHub build)
-          EOF
+          VERSION="${{ needs.create-release.outputs.release-tag }}"
+          VERSION="${VERSION#v}"
 
-      # ➕ ADDED: build the .deb package
+          # MUST start at column 0 — no indentation
+cat > debpkg/DEBIAN/control <<EOF
+Package: aseprite
+Version: $VERSION
+Architecture: amd64
+Maintainer: GitHub Actions
+Priority: optional
+Description: Aseprite (custom GitHub build)
+EOF
+
+      ###############################################
+      # ➕ ADDED: Build the .deb package
+      ###############################################
       - name: Build .deb package
         if: runner.os == 'Linux'
         shell: bash
@@ -164,7 +171,9 @@ jobs:
           asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
           tag: ${{ needs.create-release.outputs.release-tag }}
 
-      # ➕ ADDED: upload the .deb package
+      ###############################################
+      # ➕ ADDED: Upload .deb package
+      ###############################################
       - name: Upload .deb package
         if: runner.os == 'Linux'
         uses: svenstaro/upload-release-action@v2
@@ -173,3 +182,4 @@ jobs:
           file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
           asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
           tag: ${{ needs.create-release.outputs.release-tag }}
+
