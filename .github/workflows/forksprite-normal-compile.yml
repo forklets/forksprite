@@ -116,6 +116,35 @@ jobs:
         working-directory: aseprite
         run: |
           cd build && ninja
+
+      # ➕ ADDED: create .deb packaging structure
+      - name: Create Debian package structure
+        if: runner.os == 'Linux'
+        shell: bash
+        working-directory: aseprite/build/bin
+        run: |
+          mkdir -p debpkg/DEBIAN
+          mkdir -p debpkg/usr/local/bin
+
+          cp aseprite debpkg/usr/local/bin/aseprite
+
+          cat <<EOF > debpkg/DEBIAN/control
+          Package: aseprite
+          Version: ${{ needs.create-release.outputs.release-tag }}
+          Architecture: amd64
+          Maintainer: GitHub Actions
+          Priority: optional
+          Description: Aseprite (custom GitHub build)
+          EOF
+
+      # ➕ ADDED: build the .deb package
+      - name: Build .deb package
+        if: runner.os == 'Linux'
+        shell: bash
+        working-directory: aseprite/build/bin
+        run: |
+          dpkg-deb --build debpkg Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
+
       - name: Clean Up Build folder
         working-directory: aseprite/build/bin
         shell: bash
@@ -132,4 +161,14 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
           asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
+          tag: ${{ needs.create-release.outputs.release-tag }}
+
+      # ➕ ADDED: upload the .deb package
+      - name: Upload .deb package
+        if: runner.os == 'Linux'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
+          asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
           tag: ${{ needs.create-release.outputs.release-tag }}
