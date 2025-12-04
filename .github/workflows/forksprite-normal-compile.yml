@@ -1,5 +1,4 @@
 name: Build and release Aseprite
-
 on:
   push:
     branches:
@@ -9,7 +8,6 @@ on:
   workflow_dispatch:
 env:
   BUILD_TYPE: Release
-
 jobs:
   fetch-aseprite-info:
     name: Fetch deps info
@@ -25,7 +23,6 @@ jobs:
           group: aseprite
           repo: aseprite
           match: Aseprite-.*?-Source.zip
-
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -43,7 +40,6 @@ jobs:
           body: Aseprite-${{ needs.fetch-aseprite-info.outputs.release-tag }}
           skipIfReleaseExists: true
           token: ${{ secrets.GITHUB_TOKEN }}
-
   build-aseprite:
     name: Build Aseprite
     needs: create-release
@@ -94,13 +90,11 @@ jobs:
           export enable_ccache=off
           export laf_backend=skia
           export enable_scripting=on
-
           if [[ "${{ runner.os }}" == "macOS" ]] ; then
             export skia_arch=arm64
           else
             export skia_arch=x64
           fi
-
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
@@ -116,9 +110,8 @@ jobs:
         working-directory: aseprite
         run: |
           cd build && ninja
-
       ###############################################
-      # ➕ ADDED: Create Debian package structure
+      # ADDED: Create Debian package structure
       ###############################################
       - name: Create Debian package structure
         if: runner.os == 'Linux'
@@ -127,24 +120,19 @@ jobs:
         run: |
           mkdir -p debpkg/DEBIAN
           mkdir -p debpkg/usr/local/bin
-
           cp aseprite debpkg/usr/local/bin/aseprite
-
           VERSION="${{ needs.create-release.outputs.release-tag }}"
           VERSION="${VERSION#v}"
-
-          # MUST start at column 0 — no indentation
-cat > debpkg/DEBIAN/control <<EOF
-Package: aseprite
-Version: $VERSION
-Architecture: amd64
-Maintainer: GitHub Actions
-Priority: optional
-Description: Aseprite (custom GitHub build)
-EOF
-
+          cat > debpkg/DEBIAN/control << 'EOF'
+          Package: aseprite
+          Version: $VERSION
+          Architecture: amd64
+          Maintainer: GitHub Actions
+          Priority: optional
+          Description: Aseprite (custom GitHub build)
+          EOF
       ###############################################
-      # ➕ ADDED: Build the .deb package
+      # ADDED: Build the .deb package
       ###############################################
       - name: Build .deb package
         if: runner.os == 'Linux'
@@ -152,7 +140,6 @@ EOF
         working-directory: aseprite/build/bin
         run: |
           dpkg-deb --build debpkg Aseprite-${{ needs.create-release.outputs.release-tag }}-Linux.deb
-
       - name: Clean Up Build folder
         working-directory: aseprite/build/bin
         shell: bash
@@ -170,9 +157,8 @@ EOF
           file: aseprite/build/bin/Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
           asset_name: Aseprite-${{ needs.create-release.outputs.release-tag }}-${{ runner.os }}.zip
           tag: ${{ needs.create-release.outputs.release-tag }}
-
       ###############################################
-      # ➕ ADDED: Upload .deb package
+      # ADDED: Upload .deb package
       ###############################################
       - name: Upload .deb package
         if: runner.os == 'Linux'
