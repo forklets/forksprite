@@ -130,7 +130,8 @@ jobs:
 
           cat <<EOF > debpkg/DEBIAN/control
           Package: aseprite
-          Version: ${{ needs.create-release.outputs.release-tag }}
+          Version="${{ needs.create-release.outputs.release-tag }}"
+          Version="${VERSION#v}"
           Architecture: amd64
           Maintainer: GitHub Actions
           Priority: optional
